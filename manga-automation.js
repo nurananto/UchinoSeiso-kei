@@ -1,34 +1,249 @@
 /**
- * MANGA-AUTOMATION.JS - MANIFEST-BASED VERSION
- * ✅ Fix: Uses manifest.json instead of counting images
- * ✅ Fix: lastChapterUpdate uses LATEST unlocked chapter date
- * ✅ Fix: All timestamps converted to WIB (GMT+7)
- * ✅ NEW: Support for "oneshot" folder
+ * MANGA-AUTOMATION.JS - CLOUDFLARE WORKERS VERSION (COMPLETE)
+ * 
+ * Environment Variables:
+ * - CLOUDFLARE_WORKER_URL: https://manga-code-validator.YOUR_SUBDOMAIN.workers.dev
+ * - SECRET_TOKEN: Manifest encryption secret
  * 
  * Usage:
- * node manga-automation.js generate                → Generate manga.json
- * node manga-automation.js sync                    → Sync chapters
- * node manga-automation.js update-views            → Update manga views
- * node manga-automation.js update-chapters         → Update chapter views
+ * node manga-automation.js generate         → Generate manga.json
+ * node manga-automation.js sync             → Sync chapters
+ * node manga-automation.js update-views     → Update manga views
+ * node manga-automation.js update-chapters  → Update chapter views
  */
 
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
+const https = require('https');
+const crypto = require('crypto');
 
 // ============================================
 // CONSTANTS
 // ============================================
 
-const VIEW_THRESHOLD = 1;  // Update every 1 manga view (was 20)
-const CHAPTER_VIEW_THRESHOLD = 1;  // Update every 1 chapter view (was 10)
+const VIEW_THRESHOLD = 1;  // Update every 1 manga view
+const CHAPTER_VIEW_THRESHOLD = 1;  // Update every 1 chapter view
+
+// Cloudflare Worker URL
+const CLOUDFLARE_WORKER_URL = process.env.CLOUDFLARE_WORKER_URL || '';
+
+// ============================================
+// CLOUDFLARE API FUNCTIONS
+// ============================================
+
+async function uploadCodesToCloudflare(repoName, codes) {
+    if (!CLOUDFLARE_WORKER_URL) {
+        console.log('⚠️  CLOUDFLARE_WORKER_URL not configured');
+        console.log('\n📋 Manual codes:');
+        codes.forEach(item => {
+            console.log(`   ${repoName} | ${item.chapter} | ${item.code}`);
+        });
+        return false;
+    }
+
+    if (codes.length === 0) return true;
+
+    console.log(`📤 Uploading ${codes.length} codes to Cloudflare KV...`);
+
+    const postData = JSON.stringify({
+        action: 'uploadCodes',
+        repoName: repoName,
+        codes: codes
+    });
+
+    return new Promise((resolve) => {
+        const url = new URL(CLOUDFLARE_WORKER_URL);
+
+        const options = {
+            hostname: url.hostname,
+            path: url.pathname,
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(postData)
+            }
+        };
+
+        const req = https.request(options, (res) => {
+            let data = '';
+            res.on('data', (chunk) => { data += chunk; });
+            res.on('end', () => {
+                try {
+                    const response = JSON.parse(data);
+                    if (response.success) {
+                        console.log(`✅ Uploaded: ${response.uploaded || 0} new, ${response.updated || 0} updated`);
+                        resolve(true);
+                    } else {
+                        console.error('❌ Upload failed:', response.message);
+                        resolve(false);
+                    }
+                } catch (error) {
+                    console.error('❌ Parse error:', error.message);
+                    resolve(false);
+                }
+            });
+        });
+
+        req.on('error', (error) => {
+            console.error('❌ Request error:', error.message);
+            resolve(false);
+        });
+
+        req.write(postData);
+        req.end();
+    });
+}
+
+async function deleteCodesFromCloudflare(repoName, chapters) {
+    if (!CLOUDFLARE_WORKER_URL || chapters.length === 0) return true;
+
+    console.log(`🗑️  Deleting ${chapters.length} codes from Cloudflare KV...`);
+
+    const postData = JSON.stringify({
+        action: 'deleteCodes',
+        repoName: repoName,
+        chapters: chapters
+    });
+
+    return new Promise((resolve) => {
+        const url = new URL(CLOUDFLARE_WORKER_URL);
+
+        const options = {
+            hostname: url.hostname,
+            path: url.pathname,
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(postData)
+            }
+        };
+
+        const req = https.request(options, (res) => {
+            let data = '';
+            res.on('data', (chunk) => { data += chunk; });
+            res.on('end', () => {
+                try {
+                    const response = JSON.parse(data);
+                    if (response.success) {
+                        console.log(`✅ Deleted ${response.deleted || 0} codes`);
+                        resolve(true);
+                    } else {
+                        console.error('❌ Delete failed:', response.message);
+                        resolve(false);
+                    }
+                } catch (error) {
+                    console.error('❌ Parse error:', error.message);
+                    resolve(false);
+                }
+            });
+        });
+
+        req.on('error', (error) => {
+            console.error('❌ Request error:', error.message);
+            resolve(false);
+        });
+
+        req.write(postData);
+        req.end();
+    });
+}
+
+// ============================================
+// GENERATE RANDOM CODE
+// ============================================
+
+function generateRandomCode(length = 16) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let code = '';
+    const randomBytes = crypto.randomBytes(length);
+    for (let i = 0; i < length; i++) {
+        code += chars[randomBytes[i] % chars.length];
+    }
+    return code;
+}
+
+// ============================================
+// GENERATE CHAPTER CODES (CLOUDFLARE VERSION)
+// ============================================
+
+async function generateChapterCodes(config) {
+    const type = config.type || 'manga';
+    const repoName = config.repoName;
+
+    if (type === 'manga') {
+        console.log('📖 Type: manga - skipping code generation');
+        return;
+    }
+
+    console.log('🔐 Type: webtoon - generating chapter codes...');
+
+    const lockedChapters = config.lockedChapters || [];
+
+    if (lockedChapters.length === 0) {
+        console.log('ℹ️  No locked chapters found');
+        return;
+    }
+
+    // Load existing codes from local tracking
+    const existingCodes = loadJSON('chapter-codes-local.json') || {};
+
+    console.log('\n🔑 Processing locked chapters:');
+
+    const newCodesToUpload = [];
+    const allCodes = { ...existingCodes };
+
+    lockedChapters.forEach(chapterFolder => {
+        if (existingCodes[chapterFolder]) {
+            console.log(`  ✓ ${chapterFolder}: code already exists`);
+            console.log(`     Plain code: ${existingCodes[chapterFolder]}`);
+        } else {
+            const plainCode = generateRandomCode(16);
+            allCodes[chapterFolder] = plainCode;
+
+            newCodesToUpload.push({
+                chapter: chapterFolder,
+                code: plainCode
+            });
+
+            console.log(`  ✨ ${chapterFolder}: NEW code generated`);
+            console.log(`     Plain code: ${plainCode}`);
+            console.log(`     📋 Copy this code to Trakteer!`);
+        }
+    });
+
+    // Upload new codes to Cloudflare
+    if (newCodesToUpload.length > 0) {
+        const uploadSuccess = await uploadCodesToCloudflare(repoName, newCodesToUpload);
+
+        if (uploadSuccess) {
+            console.log('\n✅ Cloudflare KV updated successfully!');
+            saveJSON('chapter-codes-local.json', allCodes);
+        }
+    }
+
+    // Check for removed locked chapters
+    const removedChapters = Object.keys(existingCodes).filter(ch => !lockedChapters.includes(ch));
+    if (removedChapters.length > 0) {
+        console.log(`\n🗑️  Chapters no longer locked: ${removedChapters.join(', ')}`);
+        await deleteCodesFromCloudflare(repoName, removedChapters);
+
+        removedChapters.forEach(ch => delete allCodes[ch]);
+        saveJSON('chapter-codes-local.json', allCodes);
+    }
+
+    console.log(`\n📊 Stats:`);
+    console.log(`   New codes: ${newCodesToUpload.length}`);
+    console.log(`   Existing: ${Object.keys(existingCodes).length}`);
+    console.log(`   Removed: ${removedChapters.length}`);
+    console.log(`   Total: ${lockedChapters.length}`);
+}
 
 // ============================================
 // WIB TIMEZONE HELPER (GMT+7)
 // ============================================
 
 function getWIBTimestamp() {
-    // Use toLocaleString with Asia/Jakarta timezone
     const date = new Date();
     const wibStr = date.toLocaleString('sv-SE', { timeZone: 'Asia/Jakarta' }).replace(' ', 'T');
     return wibStr + '+07:00';
@@ -79,7 +294,7 @@ function saveJSON(filename, data) {
 }
 
 // ============================================
-// NEW: ONESHOT HELPER FUNCTIONS
+// ONESHOT HELPER FUNCTIONS
 // ============================================
 
 function isOneshotFolder(folderName) {
@@ -91,11 +306,9 @@ function isNumericChapter(folderName) {
 }
 
 function getChapterSortValue(folderName) {
-    // Oneshot comes first (value -1)
     if (isOneshotFolder(folderName)) {
         return -1;
     }
-    // Numeric chapters use their numeric value
     return parseFloat(folderName);
 }
 
@@ -108,13 +321,13 @@ function getChapterTitle(folderName) {
 
 function getChapterNumber(folderName) {
     if (isOneshotFolder(folderName)) {
-        return 0; // Use 0 for oneshot
+        return 0;
     }
     return parseFloat(folderName);
 }
 
 // ============================================
-// NEW: MANIFEST HELPER FUNCTIONS
+// MANIFEST HELPER FUNCTIONS
 // ============================================
 
 function loadManifest(folderName) {
@@ -136,7 +349,6 @@ function getTotalPagesFromManifest(folderName) {
     const manifest = loadManifest(folderName);
     
     if (manifest) {
-        // Try multiple possible fields
         const totalPages = manifest.total_pages || manifest.totalPages || 
                           (manifest.pages ? manifest.pages.length : 0);
         
@@ -162,11 +374,9 @@ function getChapterFolders() {
             .filter(dirent => !dirent.name.startsWith('.'))
             .map(dirent => dirent.name)
             .filter(name => {
-                // Accept numeric chapters OR "oneshot" folder
                 return isNumericChapter(name) || isOneshotFolder(name);
             })
             .sort((a, b) => {
-                // Sort by chapter value (oneshot = -1, comes first)
                 return getChapterSortValue(a) - getChapterSortValue(b);
             });
         
@@ -191,7 +401,6 @@ function getUploadDate(folderName, isLocked) {
     
     try {
         if (!isLocked) {
-            // UNLOCKED: Get date from manifest.json commit (when manifest was added)
             const manifestGitCommand = `git log --reverse --format=%aI -- "${folderName}/manifest.json" 2>/dev/null | head -1`;
             const manifestResult = execSync(manifestGitCommand, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
             
@@ -202,7 +411,6 @@ function getUploadDate(folderName, isLocked) {
             }
         }
         
-        // LOCKED or NO MANIFEST: Get folder creation date
         const folderGitCommand = `git log --reverse --format=%aI -- "${folderName}" | head -1`;
         const folderResult = execSync(folderGitCommand, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
         
@@ -210,7 +418,6 @@ function getUploadDate(folderName, isLocked) {
             return convertToWIB(folderResult);
         }
         
-        // Fallback: Use file system modification time
         const stats = fs.statSync(folderPath);
         return convertToWIB(stats.mtime.toISOString());
     } catch (error) {
@@ -236,7 +443,6 @@ function generateChaptersData(config, oldMangaData, isFirstTime) {
     const allFolders = getChapterFolders();
     const chapters = {};
     
-    // 🔥 AUTO-CLEANUP: Remove old locked chapters that are no longer in config
     let removedLockedChapters = [];
     if (oldMangaData && oldMangaData.chapters) {
         Object.keys(oldMangaData.chapters).forEach(chapterName => {
@@ -244,7 +450,6 @@ function generateChaptersData(config, oldMangaData, isFirstTime) {
             const folderExists = checkIfFolderExists(chapterName);
             const inCurrentConfig = config.lockedChapters.includes(chapterName);
             
-            // If chapter was locked, has no folder, and removed from config → delete it
             if (oldChapter.locked && !folderExists && !inCurrentConfig) {
                 removedLockedChapters.push(chapterName);
             }
@@ -278,24 +483,30 @@ function generateChaptersData(config, oldMangaData, isFirstTime) {
         const totalPages = folderExists ? getTotalPagesFromManifest(chapterName) : 0;
         
         const isInLockedList = config.lockedChapters.includes(chapterName);
-        const isLocked = isInLockedList && totalPages === 0;
         
-        // For locked chapters: preserve old date or use NOW if new
+        // ✅ NEW LOGIC: Webtoon type locked if in list (regardless of manifest)
+        let isLocked;
+        const type = config.type || 'manga';
+        
+        if (type === 'manga') {
+            // Manga: locked if in list AND no manifest
+            isLocked = isInLockedList && totalPages === 0;
+        } else {
+            // Webtoon: locked if in list (regardless of manifest)
+            isLocked = isInLockedList;
+        }
+        
         let uploadDate;
         if (isLocked && !folderExists) {
-            // Check if chapter existed before
             const oldChapter = oldMangaData && oldMangaData.chapters && oldMangaData.chapters[chapterName];
             if (oldChapter && oldChapter.uploadDate) {
-                // Keep old date (locked chapter already existed)
                 uploadDate = oldChapter.uploadDate;
                 console.log(`🔒 Keeping old date for locked ${chapterName}: ${uploadDate}`);
             } else {
-                // New locked chapter - use NOW
                 uploadDate = getWIBTimestamp();
                 console.log(`🔒 NEW locked chapter ${chapterName}: ${uploadDate}`);
             }
         } else {
-            // Unlocked chapter - use folder date
             uploadDate = folderExists ? getUploadDate(chapterName, isLocked) : getWIBTimestamp();
         }
         
@@ -325,11 +536,18 @@ function generateChaptersData(config, oldMangaData, isFirstTime) {
         console.log(`${lockIcon}${typeIcon} ${chapterName} - ${totalPages} pages - ${dateStr} - ${views} views`);
     });
     
-    // AUTO-CLEANUP: Remove uploaded chapters from lockedChapters
     const updatedLockedChapters = config.lockedChapters.filter(chapterName => {
         const folderExists = checkIfFolderExists(chapterName);
         const totalPages = folderExists ? getTotalPagesFromManifest(chapterName) : 0;
-        return totalPages === 0;
+        
+        // For manga type: remove if manifest exists
+        // For webtoon type: keep in list (manual removal only)
+        const type = config.type || 'manga';
+        if (type === 'manga') {
+            return totalPages === 0;
+        } else {
+            return true; // Keep all for webtoon
+        }
     });
     
     if (updatedLockedChapters.length !== config.lockedChapters.length) {
@@ -344,10 +562,8 @@ function generateChaptersData(config, oldMangaData, isFirstTime) {
         }
     }
     
-    // 🔥 CALCULATE lastChapterUpdate FROM ALL CHAPTERS (unlocked + locked)
     let lastChapterUpdate = null;
     
-    // Get ALL chapter dates (including locked)
     const allChapterDates = Object.values(chapters).map(ch => ({
         chapterName: ch.folder,
         uploadDate: ch.uploadDate,
@@ -355,12 +571,10 @@ function generateChaptersData(config, oldMangaData, isFirstTime) {
     }));
     
     if (allChapterDates.length > 0) {
-        // Sort by date (newest first)
         allChapterDates.sort((a, b) => {
             return new Date(b.uploadDate) - new Date(a.uploadDate);
         });
         
-        // Use the NEWEST chapter (locked or unlocked)
         lastChapterUpdate = allChapterDates[0].uploadDate;
         
         const lockIcon = allChapterDates[0].locked ? '🔒' : '✅';
@@ -373,10 +587,9 @@ function generateChaptersData(config, oldMangaData, isFirstTime) {
     return { chapters, lastChapterUpdate };
 }
 
-function commandGenerate() {
+async function commandGenerate() {
     console.log('📚 Generating manga.json...\n');
     
-    // Ensure pending files exist first
     ensurePendingFilesExist();
     
     const config = loadConfig();
@@ -389,6 +602,9 @@ function commandGenerate() {
     } else {
         console.log('🔄 Updating existing manga.json');
     }
+    
+    // ✅ GENERATE CHAPTER CODES (CLOUDFLARE)
+    await generateChapterCodes(config);
     
     const { chapters, lastChapterUpdate } = generateChaptersData(config, oldMangaData, isFirstTime);
     
@@ -423,7 +639,8 @@ function commandGenerate() {
             repoUrl: repoUrl,
             imagePrefix: config.imagePrefix || 'Image',
             imageFormat: config.imageFormat || 'jpg',
-            lockedChapters: config.lockedChapters || []
+            lockedChapters: config.lockedChapters || [],
+            type: config.type || 'manga'  // ✅ ADD TYPE
         },
         chapters: chapters,
         lastUpdated: getWIBTimestamp(),
@@ -467,7 +684,6 @@ function ensurePendingFilesExist() {
     
     let created = false;
     
-    // Check and create pending-views.json
     if (!fs.existsSync('pending-views.json')) {
         console.log('📄 Creating pending-views.json...');
         const initialPendingViews = {
@@ -479,7 +695,6 @@ function ensurePendingFilesExist() {
         created = true;
     }
     
-    // Check and create pending-chapter-views.json
     if (!fs.existsSync('pending-chapter-views.json')) {
         console.log('📄 Creating pending-chapter-views.json...');
         const initialPendingChapters = {
@@ -562,7 +777,6 @@ function commandSync() {
 function commandUpdateViews() {
     console.log('📊 Checking view counter...\n');
     
-    // Ensure pending files exist
     ensurePendingFilesExist();
     
     const pendingData = loadJSON('pending-views.json');
@@ -606,7 +820,6 @@ function commandUpdateViews() {
 function commandUpdateChapterViews() {
     console.log('📖 Checking chapter views counter...\n');
     
-    // Ensure pending files exist
     ensurePendingFilesExist();
     
     const pendingData = loadJSON('pending-chapter-views.json');
@@ -684,19 +897,19 @@ function commandUpdateChapterViews() {
 // MAIN
 // ============================================
 
-function main() {
+async function main() {
     const command = process.argv[2];
     
     console.log('╔═══════════════════════════════════════╗');
-    console.log('║   MANGA AUTOMATION SCRIPT v5.0 WIB   ║');
-    console.log('║  ✅ WIB Timezone (GMT+7)             ║');
-    console.log('║  ✅ Manifest-based Detection         ║');
+    console.log('║   MANGA AUTOMATION v7.0 - FINAL      ║');
+    console.log('║  ✅ Cloudflare Workers Integration   ║');
+    console.log('║  ✅ Webtoon Type Support             ║');
     console.log('║  🎯 Oneshot Support                  ║');
     console.log('╚═══════════════════════════════════════╝\n');
     
     switch (command) {
         case 'generate':
-            commandGenerate();
+            await commandGenerate();
             break;
         case 'sync':
             commandSync();
