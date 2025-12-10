@@ -37,15 +37,21 @@ jobs:
       - name: 📝 Check for changes
         id: check_changes
         run: |
-          git add -A chapter-codes-local.json
-          
-          if git diff --staged --quiet; then
-            echo "has_changes=false" >> $GITHUB_OUTPUT
-            echo "ℹ️  No changes detected"
+          # ✅ FIX: Only add file if it exists
+          if [ -f chapter-codes-local.json ]; then
+            git add -A chapter-codes-local.json
+            
+            if git diff --staged --quiet; then
+              echo "has_changes=false" >> $GITHUB_OUTPUT
+              echo "ℹ️  No changes detected"
+            else
+              echo "has_changes=true" >> $GITHUB_OUTPUT
+              echo "✅ Changes detected!"
+              git status --short
+            fi
           else
-            echo "has_changes=true" >> $GITHUB_OUTPUT
-            echo "✅ Changes detected!"
-            git status --short
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "ℹ️  chapter-codes-local.json not found (manga type is not webtoon)"
           fi
 
       - name: 💾 Commit and push changes
@@ -64,5 +70,5 @@ jobs:
       - name: ℹ️  No changes
         if: steps.check_changes.outputs.has_changes != 'true'
         run: |
-          echo "ℹ️  chapter-codes-local.json is already up to date"
-          echo "   No sync needed"
+          echo "ℹ️  No sync performed or no changes detected"
+          echo "   This is normal for manga type (not webtoon)"
