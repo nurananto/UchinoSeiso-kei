@@ -15,7 +15,7 @@
       "Slice of Life"
     ],
     "status": "ONGOING",
-    "views": 570,
+    "views": 575,
     "links": {
       "mangadex": "https://mangadex.org/title/5993c10b-c49e-4771-9a3a-8b8436b12d80/uchi-no-seiso-kei-iinchou-ga-katsute-chuunibyou-idol-datta-koto-o-ore-dake-ga-shitteiru",
       "raw": "https://comic-days.com/episode/2550912965858307088"
@@ -35,7 +35,7 @@
       "totalPages": 38,
       "pages": 38,
       "locked": false,
-      "views": 164
+      "views": 167
     },
     "2": {
       "title": "Chapter 2",
@@ -45,7 +45,7 @@
       "totalPages": 35,
       "pages": 35,
       "locked": false,
-      "views": 74
+      "views": 77
     },
     "3": {
       "title": "Chapter 3",
@@ -55,7 +55,7 @@
       "totalPages": 36,
       "pages": 36,
       "locked": false,
-      "views": 71
+      "views": 74
     },
     "4.1": {
       "title": "Chapter 4.1",
@@ -65,7 +65,7 @@
       "totalPages": 20,
       "pages": 20,
       "locked": false,
-      "views": 56
+      "views": 58
     },
     "4.2": {
       "title": "Chapter 4.2",
@@ -75,7 +75,7 @@
       "totalPages": 16,
       "pages": 16,
       "locked": false,
-      "views": 54
+      "views": 56
     },
     "5.1": {
       "title": "Chapter 5.1",
@@ -85,7 +85,7 @@
       "totalPages": 16,
       "pages": 16,
       "locked": false,
-      "views": 65
+      "views": 67
     },
     "5.2": {
       "title": "Chapter 5.2",
@@ -95,7 +95,7 @@
       "totalPages": 22,
       "pages": 22,
       "locked": false,
-      "views": 98
+      "views": 99
     },
     "6.1": {
       "title": "Chapter 6.1",
@@ -105,7 +105,7 @@
       "totalPages": 18,
       "pages": 18,
       "locked": false,
-      "views": 80
+      "views": 81
     },
     "6.2": {
       "title": "Chapter 6.2",
@@ -115,7 +115,7 @@
       "totalPages": 20,
       "pages": 20,
       "locked": false,
-      "views": 90
+      "views": 93
     },
     "7.1": {
       "title": "Chapter 7.1",
@@ -125,9 +125,9 @@
       "totalPages": 23,
       "pages": 23,
       "locked": false,
-      "views": 85
+      "views": 86
     }
   },
-  "lastUpdated": "2025-12-22T00:11:29+07:00",
+  "lastUpdated": "2025-12-22T08:52:49+07:00",
   "lastChapterUpdate": "2025-12-11T21:20:44+07:00"
 }
