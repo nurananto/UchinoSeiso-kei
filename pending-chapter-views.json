@@ -1,55 +1,55 @@
 {
   "chapters": {
     "1": {
-      "pendingViews": 3,
-      "lastIncrement": "2025-12-21T23:00:13.312Z",
-      "lastUpdate": "2025-12-21T00:11:01+07:00"
+      "pendingViews": 0,
+      "lastIncrement": "2025-12-22T12:10:27.072Z",
+      "lastUpdate": "2025-12-23T00:13:11+07:00"
     },
     "2": {
-      "pendingViews": 3,
+      "pendingViews": 0,
       "lastIncrement": "2025-12-21T23:03:54.307Z",
-      "lastUpdate": "2025-12-21T00:11:01+07:00"
+      "lastUpdate": "2025-12-22T08:52:49+07:00"
     },
     "3": {
-      "pendingViews": 3,
+      "pendingViews": 0,
       "lastIncrement": "2025-12-22T00:30:54.333Z",
-      "lastUpdate": "2025-12-21T00:11:01+07:00"
+      "lastUpdate": "2025-12-22T08:52:49+07:00"
     },
     "4.1": {
-      "pendingViews": 2,
+      "pendingViews": 0,
       "lastIncrement": "2025-12-22T00:35:50.988Z",
-      "lastUpdate": "2025-12-18T00:18:39+07:00"
+      "lastUpdate": "2025-12-22T08:52:49+07:00"
     },
     "4.2": {
-      "pendingViews": 2,
+      "pendingViews": 0,
       "lastIncrement": "2025-12-22T01:00:06.880Z",
-      "lastUpdate": "2025-12-18T00:18:39+07:00"
+      "lastUpdate": "2025-12-22T08:52:49+07:00"
     },
     "5.1": {
-      "pendingViews": 2,
-      "lastIncrement": "2025-12-22T01:02:22.456Z",
-      "lastUpdate": "2025-12-18T00:18:39+07:00"
+      "pendingViews": 0,
+      "lastIncrement": "2025-12-22T06:36:17.800Z",
+      "lastUpdate": "2025-12-23T00:13:11+07:00"
     },
     "5.2": {
-      "pendingViews": 1,
+      "pendingViews": 0,
       "lastIncrement": "2025-12-22T01:06:50.012Z",
-      "lastUpdate": "2025-12-18T00:18:39+07:00"
+      "lastUpdate": "2025-12-22T08:52:49+07:00"
     },
     "6.1": {
-      "pendingViews": 1,
+      "pendingViews": 0,
       "lastIncrement": "2025-12-22T01:15:14.768Z",
-      "lastUpdate": "2025-12-18T00:18:39+07:00"
+      "lastUpdate": "2025-12-22T08:52:49+07:00"
     },
     "6.2": {
-      "pendingViews": 3,
+      "pendingViews": 0,
       "lastIncrement": "2025-12-22T01:19:22.612Z",
-      "lastUpdate": "2025-12-22T00:11:29+07:00"
+      "lastUpdate": "2025-12-22T08:52:49+07:00"
     },
     "7.1": {
-      "pendingViews": 1,
+      "pendingViews": 0,
       "lastIncrement": "2025-12-22T01:20:48.673Z",
-      "lastUpdate": "2025-12-22T00:11:29+07:00"
+      "lastUpdate": "2025-12-22T08:52:49+07:00"
     }
   },
-  "lastUpdated": "2025-12-22T00:11:29+07:00"
+  "lastUpdated": "2025-12-23T00:13:11+07:00"
 }
