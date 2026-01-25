@@ -15,7 +15,7 @@
       "Slice of Life"
     ],
     "status": "ONGOING",
-    "views": 963,
+    "views": 968,
     "links": {
       "mangadex": "https://mangadex.org/title/5993c10b-c49e-4771-9a3a-8b8436b12d80/uchi-no-seiso-kei-iinchou-ga-katsute-chuunibyou-idol-datta-koto-o-ore-dake-ga-shitteiru",
       "raw": "https://comic-days.com/episode/2550912965858307088"
@@ -35,7 +35,7 @@
       "totalPages": 38,
       "pages": 38,
       "locked": false,
-      "views": 248
+      "views": 249
     },
     "2": {
       "title": "Chapter 2",
@@ -145,9 +145,19 @@
       "totalPages": 23,
       "pages": 23,
       "locked": false,
-      "views": 119
+      "views": 121
+    },
+    "8.2": {
+      "title": "Chapter 8.2",
+      "chapter": 8.2,
+      "folder": "8.2",
+      "uploadDate": "2026-01-25T15:35:07+07:00",
+      "totalPages": 20,
+      "pages": 20,
+      "locked": false,
+      "views": 0
     }
   },
-  "lastUpdated": "2026-01-25T00:12:12+07:00",
-  "lastChapterUpdate": "2026-01-09T09:34:48+07:00"
+  "lastUpdated": "2026-01-25T15:35:57+07:00",
+  "lastChapterUpdate": "2026-01-25T15:35:07+07:00"
 }
