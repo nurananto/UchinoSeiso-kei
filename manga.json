@@ -156,8 +156,18 @@
       "pages": 20,
       "locked": false,
       "views": 99
+    },
+    "9.1": {
+      "title": "Chapter 9.1",
+      "chapter": 9.1,
+      "folder": "9.1",
+      "uploadDate": "2026-02-27T19:17:26+07:00",
+      "totalPages": 14,
+      "pages": 14,
+      "locked": false,
+      "views": 0
     }
   },
-  "lastUpdated": "2026-02-26T19:01:36.825Z",
-  "lastChapterUpdate": "2026-01-25T15:35:07+07:00"
+  "lastUpdated": "2026-02-27T19:18:22+07:00",
+  "lastChapterUpdate": "2026-02-27T19:17:26+07:00"
 }
