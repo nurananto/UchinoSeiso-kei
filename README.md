@@ -12,9 +12,7 @@
 | Judul Alternatif | うちの清楚系委員長がかつて中二病アイドルだったことを俺だけが知っている。 |
 | Author | Kota Mikami, Neko Sorani, Yugaa, Kobayashi Shoujo |
 | Tipe | Manga (Hitam Putih) |
-| Status | Ongoing |
 | Genre | Shounen · Drama · Comedy · Romance · School Life · Slice of Life |
-| Chapter | 14 chapter |
 
 ## Link
 
